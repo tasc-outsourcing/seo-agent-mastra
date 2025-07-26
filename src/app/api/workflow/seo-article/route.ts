@@ -39,8 +39,8 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      // Execute the workflow
-      const result = await workflow.execute(workflowInput)
+      // Execute the workflow using Mastra
+      const result = await mastra.executeWorkflow('seoArticleWorkflow', workflowInput)
       
       return NextResponse.json({
         success: true,

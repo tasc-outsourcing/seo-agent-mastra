@@ -33,7 +33,8 @@ export async function POST(request: NextRequest) {
         executeWorkflowWithProgress(
           { topic, articleType, targetAudience, researchOption, existingResearch },
           sendSSE,
-          controller
+          controller,
+          mastra
         )
       }
     })
@@ -55,7 +56,8 @@ export async function POST(request: NextRequest) {
 async function executeWorkflowWithProgress(
   input: any,
   sendSSE: (data: any) => void,
-  controller: ReadableStreamDefaultController
+  controller: ReadableStreamDefaultController,
+  mastra: any
 ) {
   try {
     const { topic, articleType, targetAudience, researchOption, existingResearch } = input
@@ -68,10 +70,8 @@ async function executeWorkflowWithProgress(
       progress: 0
     })
 
-    // Get the workflow
-    const workflow = mastra.getWorkflow('seoArticleWorkflow')
-    
-    if (!workflow) {
+    // Check if workflow exists
+    if (!mastra.getWorkflow('seoArticleWorkflow')) {
       sendSSE({
         type: 'error',
         message: 'SEO article workflow not found'
@@ -116,9 +116,9 @@ async function executeWorkflowWithProgress(
       })
     }
 
-    // Try to execute the actual workflow
+    // Try to execute the actual workflow using Mastra
     try {
-      const result = await workflow.execute(workflowInput)
+      const result = await mastra.executeWorkflow('seoArticleWorkflow', workflowInput)
       
       sendSSE({
         type: 'workflow_complete',
