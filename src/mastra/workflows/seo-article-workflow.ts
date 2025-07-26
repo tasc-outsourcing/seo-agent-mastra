@@ -217,15 +217,14 @@ const reviewStep = createStep({
 })
 
 export const seoArticleWorkflow = createWorkflow({
-  id: "seo-article-workflow",
+  id: "seoArticleWorkflow",
   description: "Complete SEO article creation workflow with 15 phases",
   inputSchema: seoArticleWorkflowSchema,
   outputSchema: z.object({
     reviewComplete: z.boolean(),
     deliveryReady: z.boolean(),
     summary: z.string()
-  }),
-  steps: [researchStep, structureStep, contentStep, optimizationStep, reviewStep]
+  })
 })
   .then(researchStep)
   .then(structureStep)

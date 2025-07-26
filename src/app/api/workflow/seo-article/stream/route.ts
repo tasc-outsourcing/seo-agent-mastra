@@ -70,66 +70,76 @@ async function executeWorkflowWithProgress(
       progress: 0
     })
 
-    // Using mock workflow for demonstration
-    // TODO: Implement actual workflow integration
-
     // Prepare workflow input
     const workflowInput = {
       userInput: topic,
       articleType: articleType || 'informational',
       targetAudience: targetAudience || 'technical professionals',
-      urgency: 'standard' as const
-    }
-
-    // Simulate step-by-step execution with progress updates
-    const steps = [
-      { id: 'research', name: 'SEO Research & Analysis', progress: 20 },
-      { id: 'structure', name: 'Structure & Planning', progress: 40 },
-      { id: 'content', name: 'Content Creation', progress: 60 },
-      { id: 'optimization', name: 'SEO Optimization & Polish', progress: 80 },
-      { id: 'review', name: 'Final Review & Delivery', progress: 100 }
-    ]
-
-    for (const step of steps) {
-      sendSSE({
-        type: 'step_start',
-        step: step.id,
-        name: step.name,
-        progress: step.progress - 20
-      })
-
-      // Simulate step execution time
-      await new Promise(resolve => setTimeout(resolve, 2000))
-
-      sendSSE({
-        type: 'step_complete',
-        step: step.id,
-        name: step.name,
-        progress: step.progress
+      urgency: 'standard' as const,
+      // Add research data if provided
+      ...(researchOption === 'existing' && existingResearch && {
+        existingResearch
       })
     }
 
-    // Generate mock result to demonstrate the interface
-    // TODO: Implement actual agent orchestration
-    const mockResult = {
-      articleSlug: topic.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').substring(0, 50),
-      focusKeyword: topic,
-      wordCount: 1850,
-      seoScore: 94,
-      readabilityScore: 87,
-      content: `# ${topic}\n\nThis is a comprehensive guide about ${topic}. This article has been generated using our SEO workflow to ensure maximum search engine visibility and user engagement.\n\n## Introduction\n\nContent generated here...\n\n## Main Content\n\nDetailed information about ${topic}...\n\n## Conclusion\n\nWrapping up the discussion on ${topic}...`,
-      metadata: {
-        title: topic,
-        description: `Comprehensive guide on ${topic}. Learn everything you need to know with expert insights and actionable tips.`,
-        keywords: [topic, 'guide', 'tips', 'expert']
-      }
-    }
+    // Get the SEO article workflow
+    const workflow = mastra.getWorkflow('seoArticleWorkflow')
     
+    if (!workflow) {
+      throw new Error('SEO article workflow not found')
+    }
+
     sendSSE({
-      type: 'workflow_complete',
-      result: mockResult,
-      message: 'SEO article workflow completed successfully!'
+      type: 'status',
+      step: 'starting',
+      message: 'Executing SEO article workflow...',
+      progress: 10
     })
+
+    // Execute the workflow with streaming
+    console.log('Creating workflow run for streaming:', workflowInput)
+    
+    const run = await workflow.createRunAsync()
+    const result = await run.stream({
+      inputData: workflowInput
+    })
+
+    // Stream the workflow execution
+    let stepCount = 0
+    const totalSteps = 5 // Research, Structure, Content, Optimization, Review
+    
+    for await (const chunk of result.stream) {
+      stepCount++
+      const progress = Math.min((stepCount / totalSteps) * 90, 90) // Leave 10% for final processing
+      
+      sendSSE({
+        type: 'step_progress',
+        step: `step_${stepCount}`,
+        message: `Processing step ${stepCount} of ${totalSteps}...`,
+        progress: progress,
+        data: chunk
+      })
+    }
+
+    // Get the final result
+    const finalResult = await result.result
+    
+    if (finalResult.status === 'success') {
+      sendSSE({
+        type: 'workflow_complete',
+        result: finalResult.result,
+        message: 'SEO article workflow completed successfully!',
+        progress: 100
+      })
+    } else if (finalResult.status === 'suspended') {
+      sendSSE({
+        type: 'workflow_suspended',
+        message: 'Workflow suspended - requires human interaction',
+        suspendedSteps: finalResult.suspended
+      })
+    } else {
+      throw new Error(finalResult.error || 'Workflow execution failed')
+    }
 
   } catch (error) {
     console.error('Workflow execution error:', error)

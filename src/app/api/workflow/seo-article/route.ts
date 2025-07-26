@@ -39,28 +39,39 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      // For now, return mock data to demonstrate the interface
-      // TODO: Implement actual agent orchestration
-      const result = {
-        articleSlug: topic.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').substring(0, 50),
-        focusKeyword: topic,
-        wordCount: 1850,
-        seoScore: 94,
-        readabilityScore: 87,
-        content: `# ${topic}\n\nThis is a comprehensive guide about ${topic}. This article has been generated using our SEO workflow to ensure maximum search engine visibility and user engagement.\n\n## Introduction\n\nContent generated here...\n\n## Main Content\n\nDetailed information about ${topic}...\n\n## Conclusion\n\nWrapping up the discussion on ${topic}...`,
-        metadata: {
-          title: topic,
-          description: `Comprehensive guide on ${topic}. Learn everything you need to know with expert insights and actionable tips.`,
-          keywords: [topic, 'guide', 'tips', 'expert']
-        }
-      }
+      // Execute the SEO article workflow using proper Mastra API
+      console.log('Creating workflow run for:', workflowInput)
       
-      return NextResponse.json({
-        success: true,
-        result,
-        workflowId: 'seoArticleWorkflow',
-        input: workflowInput
+      const run = await workflow.createRunAsync()
+      const result = await run.start({
+        inputData: workflowInput
       })
+      
+      console.log('Workflow execution result:', result.status)
+      
+      if (result.status === 'success') {
+        return NextResponse.json({
+          success: true,
+          result: result.result,
+          workflowId: 'seoArticleWorkflow',
+          input: workflowInput,
+          executionStatus: result.status
+        })
+      } else if (result.status === 'suspended') {
+        return NextResponse.json({
+          success: false,
+          error: 'Workflow suspended - requires human interaction',
+          suspendedSteps: result.suspended,
+          workflowId: 'seoArticleWorkflow'
+        }, { status: 202 })
+      } else {
+        return NextResponse.json({
+          success: false,
+          error: 'Workflow execution failed',
+          details: result.error || 'Unknown workflow error',
+          workflowId: 'seoArticleWorkflow'
+        }, { status: 500 })
+      }
     } catch (error) {
       console.error('API error:', error)
       return NextResponse.json({ 
