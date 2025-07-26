@@ -1,4 +1,4 @@
-import { anthropic } from "@ai-sdk/anthropic"
+import { openai } from "@ai-sdk/openai"
 import { Agent } from "@mastra/core/agent"
 
 /*************************************************************************/
@@ -67,6 +67,6 @@ When a user provides input, analyze it and begin the workflow systematically.
 export const seoOrchestratorAgent: Agent = new Agent({
 	name: "SEO Orchestrator Agent",
 	instructions: SEO_ORCHESTRATOR_PROMPT,
-	model: anthropic("claude-3-5-opus-20241022"),
+	model: openai("gpt-4o"),
 	tools: {}
 })

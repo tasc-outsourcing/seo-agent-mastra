@@ -1,4 +1,4 @@
-import { anthropic } from "@ai-sdk/anthropic"
+import { openai } from "@ai-sdk/openai"
 import { Agent } from "@mastra/core/agent"
 import { articleFileManagerTool } from "../tools/article-file-manager"
 
@@ -59,6 +59,6 @@ Focus on creating logical, user-friendly structure that serves both SEO and read
 export const seoStructureAgent: Agent = new Agent({
 	name: "SEO Structure Agent",
 	instructions: SEO_STRUCTURE_AGENT_PROMPT,
-	model: anthropic("claude-3-5-opus-20241022"),
+	model: openai("gpt-4o"),
 	tools: { articleFileManagerTool }
 })

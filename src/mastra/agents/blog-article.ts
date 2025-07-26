@@ -1,4 +1,4 @@
-import { anthropic } from "@ai-sdk/anthropic"
+import { openai } from "@ai-sdk/openai"
 import { Agent } from "@mastra/core/agent"
 import { blogResearchTool } from "../tools/blog-research"
 import { tascContextTool } from "../tools/tasc-context-tool"
@@ -37,6 +37,6 @@ You can help with:
 export const blogArticleAgent: Agent = new Agent({
 	name: "TASC Blog Article Agent",
 	instructions: BLOG_ARTICLE_AGENT_PROMPT,
-	model: anthropic("claude-3-5-opus-20241022"),
+	model: openai("gpt-4o"),
 	tools: { blogResearchTool, tascContextTool, tascWebSearchTool, tascDeepResearchTool, seoAnalyzerTool },
 }) 

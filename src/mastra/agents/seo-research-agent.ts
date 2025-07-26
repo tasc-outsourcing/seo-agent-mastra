@@ -1,4 +1,4 @@
-import { anthropic } from "@ai-sdk/anthropic"
+import { openai } from "@ai-sdk/openai"
 import { Agent } from "@mastra/core/agent"
 import { articleFileManagerTool } from "../tools/article-file-manager"
 import { tascWebSearchTool } from "../tools/tasc-web-search"
@@ -62,6 +62,6 @@ Focus on thorough research that sets up the entire workflow for success.
 export const seoResearchAgent: Agent = new Agent({
 	name: "SEO Research Agent",
 	instructions: SEO_RESEARCH_AGENT_PROMPT,
-	model: anthropic("claude-3-5-opus-20241022"),
+	model: openai("gpt-4o"),
 	tools: { articleFileManagerTool, tascWebSearchTool, tascDeepResearchTool }
 })
