@@ -23,7 +23,8 @@ export const mastra = new Mastra({
 		seoOptimizationAgent
 	},
 	storage: new LibSQLStore({
-		url: "file:./storage.db",
+		url: process.env.TURSO_DATABASE_URL || "libsql://seo-mastra-agent-tasc-outsourcing.aws-ap-south-1.turso.io",
+		authToken: process.env.TURSO_AUTH_TOKEN,
 	}),
 	logger: new PinoLogger({
 		name: "Mastra",
