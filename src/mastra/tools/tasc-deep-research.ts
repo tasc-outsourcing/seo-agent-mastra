@@ -1,5 +1,60 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
+import { createHash } from 'crypto';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+
+// Cache management utilities
+const CACHE_DIR = path.join(process.cwd(), '.cache', 'research');
+const CACHE_TTL = 3600000; // 1 hour in milliseconds
+
+async function ensureCacheDir() {
+  try {
+    await fs.mkdir(CACHE_DIR, { recursive: true });
+  } catch (error) {
+    console.warn('Failed to create cache directory:', error);
+  }
+}
+
+function generateCacheKey(input: any): string {
+  const content = JSON.stringify(input, Object.keys(input).sort());
+  return createHash('md5').update(content).digest('hex');
+}
+
+async function getCachedResult(cacheKey: string) {
+  try {
+    const cachePath = path.join(CACHE_DIR, `${cacheKey}.json`);
+    const cacheData = await fs.readFile(cachePath, 'utf-8');
+    const parsed = JSON.parse(cacheData);
+    
+    // Check if cache is still valid
+    if (Date.now() - parsed.timestamp < CACHE_TTL) {
+      console.log(`Using cached research result for key: ${cacheKey}`);
+      return parsed.data;
+    } else {
+      // Cache expired, delete file
+      await fs.unlink(cachePath).catch(() => {});
+      return null;
+    }
+  } catch (error) {
+    return null;
+  }
+}
+
+async function setCachedResult(cacheKey: string, data: any) {
+  try {
+    await ensureCacheDir();
+    const cachePath = path.join(CACHE_DIR, `${cacheKey}.json`);
+    const cacheData = {
+      timestamp: Date.now(),
+      data: data
+    };
+    await fs.writeFile(cachePath, JSON.stringify(cacheData, null, 2));
+    console.log(`Cached research result for key: ${cacheKey}`);
+  } catch (error) {
+    console.warn('Failed to cache research result:', error);
+  }
+}
 
 export const tascDeepResearchTool = createTool({
   id: 'tasc-deep-research',
@@ -39,6 +94,20 @@ export const tascDeepResearchTool = createTool({
     const { topic, researchDepth = 'comprehensive', focusAreas = [], targetAudience = 'Technical professionals and business decision-makers' } = context;
     
     console.log(`Starting deep research for TASC blog article: "${topic}"`);
+    
+    // Generate cache key based on input parameters
+    const cacheKey = generateCacheKey({
+      topic,
+      researchDepth,
+      focusAreas,
+      targetAudience
+    });
+    
+    // Try to get cached result first
+    const cachedResult = await getCachedResult(cacheKey);
+    if (cachedResult) {
+      return cachedResult;
+    }
     
     try {
       // Get the blog article agent for research
@@ -134,7 +203,7 @@ Recommendations: ${resultData.recommendations.length}
 
 This research provides comprehensive insights for creating a high-quality TASC blog article that will engage ${targetAudience} and provide valuable strategic insights.`;
 
-      return {
+      const finalResult = {
         researchSummary,
         keyFindings: resultData.keyFindings,
         sources: resultData.sources,
@@ -144,6 +213,11 @@ This research provides comprehensive insights for creating a high-quality TASC b
         recommendations: resultData.recommendations,
         seoInsights: resultData.seoInsights,
       };
+
+      // Cache the successful result
+      await setCachedResult(cacheKey, finalResult);
+
+      return finalResult;
     } catch (error: any) {
       console.error('Error during deep research:', error);
       return {

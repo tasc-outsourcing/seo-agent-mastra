@@ -1,6 +1,5 @@
 import { openai } from "@ai-sdk/openai"
 import { Agent } from "@mastra/core/agent"
-import { articleFileManagerTool } from "../tools/article-file-manager"
 import { tascWebSearchTool } from "../tools/tasc-web-search"
 import { tascDeepResearchTool } from "../tools/tasc-deep-research"
 
@@ -63,5 +62,5 @@ export const seoResearchAgent: Agent = new Agent({
 	name: "SEO Research Agent",
 	instructions: SEO_RESEARCH_AGENT_PROMPT,
 	model: openai("gpt-4o"),
-	tools: { articleFileManagerTool, tascWebSearchTool, tascDeepResearchTool }
+	tools: { tascWebSearchTool, tascDeepResearchTool }
 })

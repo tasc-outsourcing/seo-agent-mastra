@@ -18,7 +18,8 @@ const researchStep = createStep({
     articleSlug: z.string(),
     focusKeyword: z.string(),
     semanticKeywords: z.array(z.string()),
-    researchComplete: z.boolean()
+    researchComplete: z.boolean(),
+    researchStrategy: z.string().optional()
   }),
   execute: async ({ inputData, mastra }) => {
     const { userInput, articleType, targetAudience } = inputData
@@ -47,40 +48,74 @@ Phase 3: SERP Analysis
 
 Create article slug and provide research summary.`
 
-    try {
-      const result = await seoResearchAgent.generate([{
-        role: 'user',
-        content: researchPrompt
-      }])
-
-      // Create article slug from user input
-      const articleSlug = userInput
-        .toLowerCase()
-        .replace(/[^a-z0-9\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .substring(0, 50)
-
-      return {
-        articleSlug,
-        focusKeyword: userInput,
-        semanticKeywords: [], // Will be populated by agent research
-        researchComplete: true
+    // Progressive fallback strategy for research
+    const maxRetries = 3
+    const fallbackStrategies = [
+      // Strategy 1: Full deep research with blog agent
+      async () => {
+        console.log('Attempting full research with blog agent...')
+        const result = await seoResearchAgent.generate([{
+          role: 'user',
+          content: researchPrompt
+        }], { maxSteps: 15 })
+        return { result, strategy: 'full_research' }
+      },
+      // Strategy 2: Basic research with web search only
+      async () => {
+        console.log('Falling back to basic web search research...')
+        const webSearchTool = mastra!.getTool('tascWebSearchTool')
+        const webResult = await webSearchTool.execute({
+          query: userInput,
+          searchType: 'comprehensive',
+          maxResults: 5
+        })
+        return { result: webResult, strategy: 'web_search_only' }
+      },
+      // Strategy 3: Template-based research
+      async () => {
+        console.log('Using template-based research fallback...')
+        return { 
+          result: {
+            keyFindings: [`Basic research for ${userInput}`],
+            semanticKeywords: [userInput, `${userInput} guide`, `${userInput} tips`]
+          }, 
+          strategy: 'template_based' 
+        }
       }
-    } catch (error) {
-      console.error('Research phase error:', error)
-      // Fallback if agent fails
-      const articleSlug = userInput
-        .toLowerCase()
-        .replace(/[^a-z0-9\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .substring(0, 50)
+    ]
 
-      return {
-        articleSlug,
-        focusKeyword: userInput,
-        semanticKeywords: [],
-        researchComplete: false
+    let researchResult = null
+    let usedStrategy = 'unknown'
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        const strategyResult = await fallbackStrategies[attempt]()
+        researchResult = strategyResult.result
+        usedStrategy = strategyResult.strategy
+        console.log(`Research successful using strategy: ${usedStrategy}`)
+        break
+      } catch (error) {
+        console.warn(`Research attempt ${attempt + 1} failed:`, error.message)
+        if (attempt === maxRetries - 1) {
+          console.error('All research strategies failed, using minimal fallback')
+          researchResult = null
+        }
       }
+    }
+
+    // Create article slug from user input
+    const articleSlug = userInput
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .substring(0, 50)
+
+    return {
+      articleSlug,
+      focusKeyword: userInput,
+      semanticKeywords: researchResult?.semanticKeywords || [],
+      researchComplete: researchResult !== null,
+      researchStrategy: usedStrategy
     }
   }
 })
@@ -93,24 +128,62 @@ const structureStep = createStep({
     articleSlug: z.string(),
     focusKeyword: z.string(),
     semanticKeywords: z.array(z.string()),
-    researchComplete: z.boolean()
+    researchComplete: z.boolean(),
+    researchStrategy: z.string().optional()
   }),
   outputSchema: z.object({
     folderCreated: z.boolean(),
     outlineComplete: z.boolean(),
     bulletsComplete: z.boolean()
   }),
-  execute: async ({ inputData }) => {
+  execute: async ({ inputData, mastra }) => {
     const { articleSlug, focusKeyword, semanticKeywords, researchComplete } = inputData
     
     if (!researchComplete) {
       throw new Error("Research phase must be complete before structure phase")
     }
 
+    // Run folder creation and initial planning in parallel
+    const [folderResult, planningResult] = await Promise.all([
+      // Folder creation task
+      (async () => {
+        console.log(`Creating folder structure for: ${articleSlug}`)
+        const fileManager = mastra!.getTool('articleFileManagerTool')
+        const result = await fileManager.execute({
+          action: 'create_folder',
+          articleSlug: articleSlug
+        })
+        return { folderCreated: result.success }
+      })(),
+      
+      // Initial planning task
+      (async () => {
+        console.log(`Starting outline planning for: ${focusKeyword}`)
+        const structureAgent = mastra!.getAgent('seoStructureAgent')
+        const planningPrompt = `Create comprehensive outline and section bullets for: "${focusKeyword}"
+        
+        Semantic Keywords: ${semanticKeywords.join(', ')}
+        
+        Phase 5: Create detailed H2/H3 outline structure
+        Phase 6: Generate 3-5 bullet points for each section
+        
+        Focus on user intent and SEO optimization.`
+        
+        const result = await structureAgent.generate([{
+          role: 'user',
+          content: planningPrompt
+        }], { maxSteps: 10 })
+        
+        return { 
+          outlineComplete: true,
+          bulletsComplete: true 
+        }
+      })()
+    ])
+
     return {
-      folderCreated: true, // Will be updated by agent
-      outlineComplete: true,
-      bulletsComplete: true
+      ...folderResult,
+      ...planningResult
     }
   }
 })

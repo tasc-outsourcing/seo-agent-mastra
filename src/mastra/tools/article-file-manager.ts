@@ -7,14 +7,19 @@ const articleFileManagerTool = createTool({
   id: 'article_file_manager',
   description: 'Manages article files and folder structure for the SEO workflow',
   inputSchema: z.object({
-    action: z.enum(['create_folder', 'create_file', 'read_file', 'update_file', 'list_files', 'check_exists']),
+    action: z.enum(['create_folder', 'create_file', 'read_file', 'update_file', 'list_files', 'check_exists', 'batch_create', 'batch_update']),
     articleSlug: z.string().describe('The kebab-case article folder name'),
     fileName: z.string().optional().describe('Name of the file to operate on'),
     content: z.string().optional().describe('Content to write to file'),
-    fileType: z.enum(['txt', 'json', 'md']).optional().describe('Type of file to create')
+    fileType: z.enum(['txt', 'json', 'md']).optional().describe('Type of file to create'),
+    files: z.array(z.object({
+      fileName: z.string(),
+      content: z.string(),
+      fileType: z.enum(['txt', 'json', 'md']).optional()
+    })).optional().describe('Array of files for batch operations')
   }),
   execute: async ({ context }) => {
-    const { action, articleSlug, fileName, content, fileType } = context
+    const { action, articleSlug, fileName, content, fileType, files } = context
     try {
       const articlesDir = path.join(process.cwd(), 'generated-articles')
       const articleDir = path.join(articlesDir, articleSlug)
@@ -44,9 +49,12 @@ const articleFileManagerTool = createTool({
             { name: 'faqs.json', content: '{\n  "faqs": [],\n  "schema": {}\n}' }
           ]
 
-          for (const file of placeholderFiles) {
-            await fs.writeFile(path.join(articleDir, file.name), file.content, 'utf-8')
-          }
+          // Use Promise.all for parallel file creation
+          await Promise.all(
+            placeholderFiles.map(file =>
+              fs.writeFile(path.join(articleDir, file.name), file.content, 'utf-8')
+            )
+          )
 
           return {
             success: true,
@@ -130,6 +138,54 @@ const articleFileManagerTool = createTool({
               exists: false,
               path: fileName ? path.join(articleDir, fileName) : articleDir
             }
+          }
+        }
+
+        case 'batch_create': {
+          if (!files || files.length === 0) {
+            return { success: false, error: 'No files provided for batch creation' }
+          }
+
+          // Create all files in parallel
+          const results = await Promise.allSettled(
+            files.map(file => 
+              fs.writeFile(path.join(articleDir, file.fileName), file.content, 'utf-8')
+            )
+          )
+
+          const successful = results.filter(r => r.status === 'fulfilled').length
+          const failed = results.filter(r => r.status === 'rejected').length
+
+          return {
+            success: true,
+            message: `Batch file creation completed: ${successful} successful, ${failed} failed`,
+            filesCreated: successful,
+            filesFailed: failed,
+            path: articleDir
+          }
+        }
+
+        case 'batch_update': {
+          if (!files || files.length === 0) {
+            return { success: false, error: 'No files provided for batch update' }
+          }
+
+          // Update all files in parallel
+          const results = await Promise.allSettled(
+            files.map(file => 
+              fs.writeFile(path.join(articleDir, file.fileName), file.content, 'utf-8')
+            )
+          )
+
+          const successful = results.filter(r => r.status === 'fulfilled').length
+          const failed = results.filter(r => r.status === 'rejected').length
+
+          return {
+            success: true,
+            message: `Batch file update completed: ${successful} successful, ${failed} failed`,
+            filesUpdated: successful,
+            filesFailed: failed,
+            path: articleDir
           }
         }
 

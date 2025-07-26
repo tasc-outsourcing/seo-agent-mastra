@@ -1,5 +1,10 @@
 import { openai } from "@ai-sdk/openai"
 import { Agent } from "@mastra/core/agent"
+import { articleFileManagerTool } from "../tools/article-file-manager"
+import { tascWebSearchTool } from "../tools/tasc-web-search"
+import { tascDeepResearchTool } from "../tools/tasc-deep-research"
+import { seoAnalyzerTool } from "../tools/seo-analyzer"
+import { tascContextTool } from "../tools/tasc-context-tool"
 
 /*************************************************************************/
 /*  SEO ORCHESTRATOR AGENT - Coordinates the entire SEO workflow
@@ -68,5 +73,11 @@ export const seoOrchestratorAgent: Agent = new Agent({
 	name: "SEO Orchestrator Agent",
 	instructions: SEO_ORCHESTRATOR_PROMPT,
 	model: openai("gpt-4o"),
-	tools: {}
+	tools: { 
+		articleFileManagerTool,
+		tascWebSearchTool,
+		tascDeepResearchTool,
+		seoAnalyzerTool,
+		tascContextTool
+	}
 })
