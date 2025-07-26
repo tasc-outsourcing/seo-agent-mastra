@@ -116,9 +116,13 @@ async function executeWorkflowWithProgress(
       })
     }
 
-    // Try to execute the actual workflow using Mastra
+    // Try to execute the actual workflow
     try {
-      const result = await mastra.executeWorkflow('seoArticleWorkflow', workflowInput)
+      const workflow = mastra.getWorkflow('seoArticleWorkflow')
+      if (!workflow) {
+        throw new Error('Workflow not found')
+      }
+      const result = await workflow.run(workflowInput)
       
       sendSSE({
         type: 'workflow_complete',
