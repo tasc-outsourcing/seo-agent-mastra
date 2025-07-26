@@ -1,7 +1,6 @@
-import { Assistant } from '@/app/assistant'
+import { redirect } from 'next/navigation'
 
 export default function Home() {
-  return (
-    <Assistant />
-  );
+  // Redirect to the SEO article creator as the main entry point
+  redirect('/seo-article-creator')
 }
