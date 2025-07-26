@@ -11,7 +11,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    await connectDB()
+    // Handle MongoDB connection errors gracefully
+    try {
+      await connectDB()
+    } catch (dbError) {
+      console.error('Database connection error:', dbError)
+      return NextResponse.json({ 
+        error: 'Database connection failed', 
+        articles: [] 
+      }, { status: 503 })
+    }
 
     const articles = await Article.find({ userId })
       .sort({ updatedAt: -1 })
@@ -36,7 +45,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { title, slug, content, metaDescription, focusKeyword, semanticKeywords } = body
 
-    await connectDB()
+    // Handle MongoDB connection errors gracefully
+    try {
+      await connectDB()
+    } catch (dbError) {
+      console.error('Database connection error:', dbError)
+      return NextResponse.json({ 
+        error: 'Database connection failed' 
+      }, { status: 503 })
+    }
 
     // Check if slug already exists for this user
     const existingArticle = await Article.findOne({ userId, slug })

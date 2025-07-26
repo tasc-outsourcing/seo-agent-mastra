@@ -99,4 +99,12 @@ ArticleSchema.index({ userId: 1, createdAt: -1 })
 ArticleSchema.index({ slug: 1 })
 ArticleSchema.index({ status: 1 })
 
-export const Article = mongoose.models.Article || mongoose.model<IArticle>('Article', ArticleSchema)
+// Use a function to get the model to avoid build-time issues
+function getArticleModel() {
+  if (!mongoose.models.Article) {
+    return mongoose.model<IArticle>('Article', ArticleSchema)
+  }
+  return mongoose.models.Article as mongoose.Model<IArticle>
+}
+
+export const Article = mongoose.models.Article || getArticleModel()
