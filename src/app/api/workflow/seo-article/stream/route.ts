@@ -69,7 +69,7 @@ async function executeWorkflowWithProgress(
     })
 
     // Get the workflow
-    const workflow = mastra.getWorkflow('seo-article-workflow')
+    const workflow = mastra.getWorkflow('seoArticleWorkflow')
     
     if (!workflow) {
       sendSSE({
@@ -118,7 +118,9 @@ async function executeWorkflowWithProgress(
 
     // Try to execute the actual workflow
     try {
-      const result = await workflow.execute(workflowInput)
+      const result = await workflow.execute({
+        inputData: workflowInput,
+      })
       
       sendSSE({
         type: 'workflow_complete',

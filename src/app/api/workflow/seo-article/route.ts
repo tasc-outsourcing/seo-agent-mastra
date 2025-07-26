@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the SEO article workflow
-    const workflow = mastra.getWorkflow('seo-article-workflow')
+    const workflow = mastra.getWorkflow('seoArticleWorkflow')
     
     if (!workflow) {
       return NextResponse.json({ error: 'SEO article workflow not found' }, { status: 500 })
@@ -40,7 +40,9 @@ export async function POST(request: NextRequest) {
 
     try {
       // Execute the workflow
-      const result = await workflow.execute(workflowInput)
+      const result = await workflow.execute({
+        inputData: workflowInput,
+      })
       
       return NextResponse.json({
         success: true,
@@ -75,7 +77,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get workflow info
-    const workflow = mastra.getWorkflow('seo-article-workflow')
+    const workflow = mastra.getWorkflow('seoArticleWorkflow')
     
     if (!workflow) {
       return NextResponse.json({ error: 'SEO article workflow not found' }, { status: 404 })
