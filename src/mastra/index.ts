@@ -29,28 +29,6 @@ export const mastra = new Mastra({
 	logger: new PinoLogger({
 		name: "Mastra",
 		level: "info",
-		// Add custom serializers for performance tracking
-		serializers: {
-			performance: (perf: any) => ({
-				duration: perf.duration,
-				stepCount: perf.stepCount,
-				toolCalls: perf.toolCalls,
-				memoryUsage: process.memoryUsage(),
-				timestamp: new Date().toISOString()
-			}),
-			workflow: (workflow: any) => ({
-				id: workflow.id,
-				status: workflow.status,
-				startTime: workflow.startTime,
-				endTime: workflow.endTime,
-				duration: workflow.endTime ? workflow.endTime - workflow.startTime : null
-			}),
-			agent: (agent: any) => ({
-				name: agent.name,
-				toolsUsed: agent.toolsUsed,
-				executionTime: agent.executionTime
-			})
-		}
 	}),
 	server: {
 		port: 4111,

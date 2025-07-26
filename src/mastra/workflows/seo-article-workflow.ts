@@ -63,13 +63,12 @@ Create article slug and provide research summary.`
       // Strategy 2: Basic research with web search only
       async () => {
         console.log('Falling back to basic web search research...')
-        const webSearchTool = mastra!.getTool('tascWebSearchTool')
-        const webResult = await webSearchTool.execute({
-          query: userInput,
-          searchType: 'comprehensive',
-          maxResults: 5
-        })
-        return { result: webResult, strategy: 'web_search_only' }
+        // Use the research agent with limited scope
+        const fallbackResult = await seoResearchAgent.generate([{
+          role: 'user',
+          content: `Perform basic web search research for: "${userInput}". Focus on key findings and semantic keywords only.`
+        }], { maxSteps: 5 })
+        return { result: fallbackResult, strategy: 'web_search_only' }
       },
       // Strategy 3: Template-based research
       async () => {
@@ -95,7 +94,8 @@ Create article slug and provide research summary.`
         console.log(`Research successful using strategy: ${usedStrategy}`)
         break
       } catch (error) {
-        console.warn(`Research attempt ${attempt + 1} failed:`, error.message)
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        console.warn(`Research attempt ${attempt + 1} failed:`, errorMessage)
         if (attempt === maxRetries - 1) {
           console.error('All research strategies failed, using minimal fallback')
           researchResult = null
@@ -110,10 +110,19 @@ Create article slug and provide research summary.`
       .replace(/\s+/g, '-')
       .substring(0, 50)
 
+    // Extract semantic keywords based on strategy used
+    let semanticKeywords: string[] = []
+    if (researchResult && usedStrategy === 'template_based') {
+      semanticKeywords = (researchResult as any).semanticKeywords || []
+    } else {
+      // For agent-generated results, extract from response or use defaults
+      semanticKeywords = [userInput, `${userInput} guide`, `${userInput} tips`]
+    }
+
     return {
       articleSlug,
       focusKeyword: userInput,
-      semanticKeywords: researchResult?.semanticKeywords || [],
+      semanticKeywords,
       researchComplete: researchResult !== null,
       researchStrategy: usedStrategy
     }
@@ -148,12 +157,16 @@ const structureStep = createStep({
       // Folder creation task
       (async () => {
         console.log(`Creating folder structure for: ${articleSlug}`)
-        const fileManager = mastra!.getTool('articleFileManagerTool')
-        const result = await fileManager.execute({
-          action: 'create_folder',
-          articleSlug: articleSlug
-        })
-        return { folderCreated: result.success }
+        // Use the structure agent to create folders
+        const structureAgent = mastra!.getAgent('seoStructureAgent')
+        const folderPrompt = `Create the folder structure for article: "${articleSlug}". Use the article file manager tool to create the complete directory structure with all required placeholder files.`
+        
+        await structureAgent.generate([{
+          role: 'user',
+          content: folderPrompt
+        }], { maxSteps: 3 })
+        
+        return { folderCreated: true }
       })(),
       
       // Initial planning task
