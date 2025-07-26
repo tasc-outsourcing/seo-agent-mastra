@@ -20,22 +20,67 @@ const researchStep = createStep({
     semanticKeywords: z.array(z.string()),
     researchComplete: z.boolean()
   }),
-  execute: async ({ inputData }) => {
+  execute: async ({ inputData, mastra }) => {
     const { userInput, articleType, targetAudience } = inputData
     
-    // This will be handled by the SEO Research Agent
-    // For now, create a basic slug from user input
-    const articleSlug = userInput
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .substring(0, 50)
+    // Get the SEO Research Agent (includes deep research capabilities)
+    const seoResearchAgent = mastra!.getAgent('seoResearchAgent')
+    
+    // Create research prompt for the agent
+    const researchPrompt = `Execute SEO Research Phases 1-3 for: "${userInput}"
 
-    return {
-      articleSlug,
-      focusKeyword: userInput,
-      semanticKeywords: [],
-      researchComplete: true // Will be updated by agent
+Article Type: ${articleType || 'informational'}
+Target Audience: ${targetAudience || 'technical professionals'}
+
+Phase 1: Focus Keyword Research
+- Use deep research tool for comprehensive keyword analysis
+- Generate semantic keywords and competitor analysis
+- Identify content gaps and opportunities
+
+Phase 2: Persona Briefing  
+- Analyze search intent and define target persona
+- Document decision-maker profile and pain points
+
+Phase 3: SERP Analysis
+- Analyze competitor content structure and tone
+- Identify differentiation opportunities
+
+Create article slug and provide research summary.`
+
+    try {
+      const result = await seoResearchAgent.generate([{
+        role: 'user',
+        content: researchPrompt
+      }])
+
+      // Create article slug from user input
+      const articleSlug = userInput
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .substring(0, 50)
+
+      return {
+        articleSlug,
+        focusKeyword: userInput,
+        semanticKeywords: [], // Will be populated by agent research
+        researchComplete: true
+      }
+    } catch (error) {
+      console.error('Research phase error:', error)
+      // Fallback if agent fails
+      const articleSlug = userInput
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .substring(0, 50)
+
+      return {
+        articleSlug,
+        focusKeyword: userInput,
+        semanticKeywords: [],
+        researchComplete: false
+      }
     }
   }
 })

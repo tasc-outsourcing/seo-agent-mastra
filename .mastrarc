@@ -1,0 +1,21 @@
+{
+  "name": "tasc-seo-agent",
+  "version": "1.0.0",
+  "description": "AI-powered SEO article creation system with 15-phase workflow",
+  "mastra": {
+    "directory": "./src/mastra",
+    "agents": "./src/mastra/agents",
+    "tools": "./src/mastra/tools", 
+    "workflows": "./src/mastra/workflows"
+  },
+  "cloud": {
+    "runtime": "node18",
+    "region": "us-east-1",
+    "environmentVariables": [
+      "OPENAI_API_KEY",
+      "DATABASE_URL",
+      "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+      "CLERK_SECRET_KEY"
+    ]
+  }
+}

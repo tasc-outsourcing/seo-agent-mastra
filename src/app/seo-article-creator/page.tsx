@@ -8,9 +8,13 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { Progress } from "@/components/ui/progress"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 import { useUser } from "@clerk/nextjs"
 import { redirect } from "next/navigation"
-import { PenTool, Lightbulb, Clock, CheckCircle, FileText, Loader2 } from "lucide-react"
+import { PenTool, Lightbulb, Clock, CheckCircle, FileText, Loader2, Rocket, Target, Users, BarChart3 } from "lucide-react"
 
 interface WorkflowStep {
   id: string
@@ -237,29 +241,56 @@ export default function SEOArticleCreatorPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="articleType">Article Type</Label>
-                      <select
-                        id="articleType"
+                      <Select
                         value={articleType}
-                        onChange={(e) => setArticleType(e.target.value as any)}
+                        onValueChange={(value) => setArticleType(value as any)}
                         disabled={isProcessing}
-                        className="w-full px-3 py-2 border rounded-md"
                       >
-                        <option value="informational">Informational</option>
-                        <option value="commercial">Commercial</option>
-                        <option value="transactional">Transactional</option>
-                        <option value="hybrid">Hybrid</option>
-                      </select>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select article type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="informational">
+                            <div className="flex items-center">
+                              <FileText className="mr-2 h-4 w-4" />
+                              Informational
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="commercial">
+                            <div className="flex items-center">
+                              <Target className="mr-2 h-4 w-4" />
+                              Commercial
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="transactional">
+                            <div className="flex items-center">
+                              <Rocket className="mr-2 h-4 w-4" />
+                              Transactional
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="hybrid">
+                            <div className="flex items-center">
+                              <BarChart3 className="mr-2 h-4 w-4" />
+                              Hybrid
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="targetAudience">Target Audience (Optional)</Label>
-                      <Input
-                        id="targetAudience"
-                        placeholder="e.g., startup founders, marketers"
-                        value={targetAudience}
-                        onChange={(e) => setTargetAudience(e.target.value)}
-                        disabled={isProcessing}
-                      />
+                      <div className="relative">
+                        <Users className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="targetAudience"
+                          placeholder="e.g., startup founders, marketers"
+                          value={targetAudience}
+                          onChange={(e) => setTargetAudience(e.target.value)}
+                          disabled={isProcessing}
+                          className="pl-10"
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -344,6 +375,18 @@ export default function SEOArticleCreatorPage() {
                     <Clock className="w-5 h-5" />
                     Workflow Progress
                   </CardTitle>
+                  {workflowSteps.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Overall Progress</span>
+                        <span>{Math.round((workflowSteps.filter(s => s.status === 'completed').length / workflowSteps.length) * 100)}%</span>
+                      </div>
+                      <Progress 
+                        value={(workflowSteps.filter(s => s.status === 'completed').length / workflowSteps.length) * 100} 
+                        className="w-full"
+                      />
+                    </div>
+                  )}
                 </CardHeader>
                 <CardContent>
                   {workflowSteps.length === 0 ? (

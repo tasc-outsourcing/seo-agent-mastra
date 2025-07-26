@@ -41,6 +41,9 @@ Your TASC SEO Agent Mastra application is **ready for Vercel deployment**! All b
    # OpenAI API (Required for AI functionality)
    OPENAI_API_KEY=sk-your_openai_api_key
    
+   # Exa API (Required for enhanced web search)
+   EXA_API_KEY=your_exa_api_key
+   
    # Database (Vercel will use serverless)
    DATABASE_URL=file:./mastra.db
    ```

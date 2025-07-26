@@ -4,7 +4,7 @@ import { UserButton, SignInButton, SignUpButton, useUser } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import Link from "next/link"
-import { BarChart3, MessageSquare, PenTool } from "lucide-react"
+import { BarChart3, MessageSquare, PenTool, FileText } from "lucide-react"
 
 export function TopNav() {
 	const { isSignedIn, isLoaded } = useUser()
@@ -23,6 +23,12 @@ export function TopNav() {
 								<Button variant="ghost" size="sm" className="flex items-center gap-2">
 									<MessageSquare className="w-4 h-4" />
 									Assistant
+								</Button>
+							</Link>
+							<Link href="/articles">
+								<Button variant="ghost" size="sm" className="flex items-center gap-2">
+									<FileText className="w-4 h-4" />
+									My Articles
 								</Button>
 							</Link>
 							<Link href="/seo-article-creator">

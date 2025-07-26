@@ -2,6 +2,7 @@ import { anthropic } from "@ai-sdk/anthropic"
 import { Agent } from "@mastra/core/agent"
 import { articleFileManagerTool } from "../tools/article-file-manager"
 import { tascWebSearchTool } from "../tools/tasc-web-search"
+import { tascDeepResearchTool } from "../tools/tasc-deep-research"
 
 /*************************************************************************/
 /*  SEO RESEARCH AGENT - Handles Phases 1-3: Research & Analysis
@@ -35,11 +36,13 @@ You are the SEO Research Agent specializing in the foundational research phases 
 - Output: serp-tone-analysis.md
 
 ## Research Tools & Methods:
-- Web search for SERP analysis
+- **Deep Research Tool**: Comprehensive multi-source research with expert analysis
+- Web search for SERP analysis and real-time data
 - Keyword clustering and semantic analysis
 - Competitor content structure analysis
 - PAA extraction and intent mapping
 - B2B persona development based on keyword context
+- Case studies and expert opinion gathering
 
 ## Quality Standards:
 - All keywords must be research-backed and relevant
@@ -60,5 +63,5 @@ export const seoResearchAgent: Agent = new Agent({
 	name: "SEO Research Agent",
 	instructions: SEO_RESEARCH_AGENT_PROMPT,
 	model: anthropic("claude-3-5-opus-20241022"),
-	tools: { articleFileManagerTool, tascWebSearchTool }
+	tools: { articleFileManagerTool, tascWebSearchTool, tascDeepResearchTool }
 })
