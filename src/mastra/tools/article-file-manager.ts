@@ -13,7 +13,8 @@ const articleFileManagerTool = createTool({
     content: z.string().optional().describe('Content to write to file'),
     fileType: z.enum(['txt', 'json', 'md']).optional().describe('Type of file to create')
   }),
-  execute: async ({ action, articleSlug, fileName, content, fileType }) => {
+  execute: async ({ context }) => {
+    const { action, articleSlug, fileName, content, fileType } = context
     try {
       const articlesDir = path.join(process.cwd(), 'generated-articles')
       const articleDir = path.join(articlesDir, articleSlug)

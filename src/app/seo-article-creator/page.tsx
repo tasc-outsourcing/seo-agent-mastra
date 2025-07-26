@@ -189,10 +189,10 @@ export default function SEOArticleCreatorPage() {
 
   const getBadgeColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'green'
-      case 'in-progress': return 'blue'
-      case 'error': return 'red'
-      default: return 'gray'
+      case 'completed': return 'default'
+      case 'in-progress': return 'secondary'
+      case 'error': return 'destructive'
+      default: return 'outline'
     }
   }
 
@@ -308,13 +308,13 @@ export default function SEOArticleCreatorPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <div className="text-sm text-gray-600">SEO Score</div>
-                        <Badge variant={results.seoScore >= 90 ? 'green' : results.seoScore >= 70 ? 'yellow' : 'red'}>
+                        <Badge variant={results.seoScore >= 90 ? 'default' : results.seoScore >= 70 ? 'secondary' : 'destructive'}>
                           {results.seoScore}/100
                         </Badge>
                       </div>
                       <div>
                         <div className="text-sm text-gray-600">Readability</div>
-                        <Badge variant={results.readabilityScore >= 80 ? 'green' : results.readabilityScore >= 60 ? 'yellow' : 'red'}>
+                        <Badge variant={results.readabilityScore >= 80 ? 'default' : results.readabilityScore >= 60 ? 'secondary' : 'destructive'}>
                           {results.readabilityScore}/100
                         </Badge>
                       </div>

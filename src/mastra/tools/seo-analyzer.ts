@@ -13,7 +13,8 @@ const seoAnalyzerTool = createTool({
     url: z.string().optional().describe('The URL slug for the content'),
     isCornerstone: z.boolean().default(false).describe('Whether this is cornerstone content requiring higher standards')
   }),
-  execute: async ({ content, title, metaDescription, keyword, url, isCornerstone }) => {
+  execute: async ({ context }) => {
+    const { content, title, metaDescription, keyword, url, isCornerstone } = context
     try {
       const seoData: SEOData = {
         content,

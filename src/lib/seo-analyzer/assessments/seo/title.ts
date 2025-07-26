@@ -64,7 +64,7 @@ export function assessTitle(
 
   // No keyword set, just check length
   return {
-    score: lengthScore,
+    score: lengthScore as AssessmentScore,
     text: `The SEO title length is ${length === 1 ? 'good' : length < minLength ? 'too short' : length > maxLength ? 'too long' : 'good'}.${lengthFeedback} Set a focus keyword to get more specific recommendations.`,
     id: 'seo-title',
     rating: lengthScore === 9 ? 'good' : 'ok'
