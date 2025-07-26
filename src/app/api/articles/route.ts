@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import connectDB from '@/lib/mongodb'
-import { Article } from '@/models/Article'
+import { getArticleModel } from '@/lib/db-models'
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
       }, { status: 503 })
     }
 
+    const Article = await getArticleModel()
     const articles = await Article.find({ userId })
       .sort({ updatedAt: -1 })
       .select('-content') // Exclude content for list view
@@ -54,6 +55,8 @@ export async function POST(request: NextRequest) {
         error: 'Database connection failed' 
       }, { status: 503 })
     }
+
+    const Article = await getArticleModel()
 
     // Check if slug already exists for this user
     const existingArticle = await Article.findOne({ userId, slug })

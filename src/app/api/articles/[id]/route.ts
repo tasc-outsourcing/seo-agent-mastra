@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import connectDB from '@/lib/mongodb'
-import { Article } from '@/models/Article'
+import { getArticleModel } from '@/lib/db-models'
 import { SEOAnalyzer, SEOData } from '@/lib/seo-analyzer'
 
 export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
@@ -15,6 +15,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     const params = await context.params
     await connectDB()
 
+    const Article = await getArticleModel()
     const article = await Article.findOne({ _id: params.id, userId }).lean()
     
     if (!article) {
@@ -42,6 +43,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     const params = await context.params
     await connectDB()
 
+    const Article = await getArticleModel()
     const article = await Article.findOne({ _id: params.id, userId })
     
     if (!article) {
@@ -89,6 +91,7 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
     const params = await context.params
     await connectDB()
 
+    const Article = await getArticleModel()
     const article = await Article.findOneAndDelete({ _id: params.id, userId })
     
     if (!article) {
