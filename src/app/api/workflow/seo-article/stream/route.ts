@@ -122,7 +122,8 @@ async function executeWorkflowWithProgress(
       if (!workflow) {
         throw new Error('Workflow not found')
       }
-      const result = await workflow.run(workflowInput)
+      const run = await workflow.createRun(workflowInput)
+      const result = await run.execute()
       
       sendSSE({
         type: 'workflow_complete',
