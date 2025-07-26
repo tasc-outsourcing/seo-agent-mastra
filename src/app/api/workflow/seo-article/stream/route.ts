@@ -118,9 +118,7 @@ async function executeWorkflowWithProgress(
 
     // Try to execute the actual workflow
     try {
-      const result = await workflow.execute({
-        inputData: workflowInput,
-      })
+      const result = await workflow.execute(workflowInput)
       
       sendSSE({
         type: 'workflow_complete',

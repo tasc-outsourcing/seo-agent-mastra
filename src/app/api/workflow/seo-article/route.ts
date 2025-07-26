@@ -40,9 +40,7 @@ export async function POST(request: NextRequest) {
 
     try {
       // Execute the workflow
-      const result = await workflow.execute({
-        inputData: workflowInput,
-      })
+      const result = await workflow.execute(workflowInput)
       
       return NextResponse.json({
         success: true,
