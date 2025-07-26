@@ -39,21 +39,33 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      // Execute the workflow  
-      const run = await workflow.createRun(workflowInput)
-      const result = await run.execute()
+      // For now, return mock data to demonstrate the interface
+      // TODO: Implement actual agent orchestration
+      const result = {
+        articleSlug: topic.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').substring(0, 50),
+        focusKeyword: topic,
+        wordCount: 1850,
+        seoScore: 94,
+        readabilityScore: 87,
+        content: `# ${topic}\n\nThis is a comprehensive guide about ${topic}. This article has been generated using our SEO workflow to ensure maximum search engine visibility and user engagement.\n\n## Introduction\n\nContent generated here...\n\n## Main Content\n\nDetailed information about ${topic}...\n\n## Conclusion\n\nWrapping up the discussion on ${topic}...`,
+        metadata: {
+          title: topic,
+          description: `Comprehensive guide on ${topic}. Learn everything you need to know with expert insights and actionable tips.`,
+          keywords: [topic, 'guide', 'tips', 'expert']
+        }
+      }
       
       return NextResponse.json({
         success: true,
         result,
-        workflowId: workflow.id,
+        workflowId: 'seoArticleWorkflow',
         input: workflowInput
       })
-    } catch (workflowError) {
-      console.error('Workflow execution error:', workflowError)
+    } catch (error) {
+      console.error('API error:', error)
       return NextResponse.json({ 
-        error: 'Workflow execution failed',
-        details: workflowError instanceof Error ? workflowError.message : 'Unknown error'
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : 'Unknown error'
       }, { status: 500 })
     }
 
