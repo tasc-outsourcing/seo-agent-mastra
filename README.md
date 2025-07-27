@@ -1,255 +1,247 @@
-# Agent Starter
+# TASC Blog Article Agent v2
 
-A complete Next.js starter template for building AI agents with Mastra. This starter includes a weather agent with tools and workflows as a working example.
+A comprehensive AI-powered blog article creation system built with Next.js and the Mastra framework, specifically designed for TASC (Technical Analysis and Strategic Consulting). This system provides automated SEO-optimized content generation with enterprise-grade security and professional quality standards.
 
-## Features
+## 🚀 Features
 
-- 🤖 **Weather Agent**: Complete example agent with tools and workflows
-- 🛠️ **Mastra Integration**: Full Mastra setup with storage, logging, and server
-- 💬 **Assistant UI**: Beautiful chat interface powered by assistant-ui
-- 🎨 **Modern Stack**: Next.js 15, TypeScript, Tailwind CSS
-- 📱 **Responsive Design**: Works on desktop and mobile
+### Content Creation
+- **AI-Powered Writing**: Multiple specialized agents for different aspects of content creation
+- **SEO Optimization**: Built-in SEO analyzer with scoring algorithms
+- **Research Integration**: Unified research tool with web search and deep analysis
+- **Human-in-the-Loop**: Workflow suspension points for quality control
 
-## Quick Start
+### Technical Features
+- **Enterprise Security**: Authentication, input validation, rate limiting
+- **Docker Support**: Containerized development and production environments
+- **Comprehensive Testing**: 100+ tests covering security, SEO, and functionality
+- **API Documentation**: Full Swagger/OpenAPI documentation
+- **Real-time Streaming**: SSE support for workflow progress updates
 
-### 1. Clone and Install
+### SEO Capabilities
+- **Content Analysis**: Readability, keyword density, structure optimization
+- **Technical SEO**: Meta tags, headings, URL optimization
+- **Advanced Features**: Semantic keywords, content freshness, external links
+- **Scoring System**: 0-100 score with actionable recommendations
+
+## 📋 Prerequisites
+
+- Node.js 18+ and npm
+- OpenAI API key (required)
+- Optional: Docker and Docker Compose
+- Optional: Clerk account for authentication
+- Optional: Exa API key for enhanced search
+- Optional: Google service account for Docs export
+- Optional: MongoDB for article storage
+
+## 🛠️ Quick Start
+
+### Using Docker (Recommended)
 
 ```bash
+# Clone the repository
 git clone <your-repo-url>
-cd agent-starter
+cd agent-starter-main
+
+# Copy environment variables
+cp .env.example .env.local
+
+# Edit .env.local and add your API keys
+
+# Start with Docker
+make dev
+```
+
+### Native Installation
+
+```bash
+# Install dependencies
 npm install
-```
 
-> **Note**: The included `.npmrc` file automatically handles peer dependency conflicts for Mastra packages.
+# Set up environment variables
+cp .env.example .env.local
+# Edit .env.local and add your API keys
 
-### 2. Environment Setup
-
-Rename `.env.example` to `.env.local` in the root directory with these two required variables:
-
-```bash
-# Required: OpenAI API Key for the weather agent
-OPENAI_API_KEY=your_openai_api_key_here
-DATABASE_URL=file:mastra.db
-```
-
-**Get your OpenAI API key:**
-
-1. Visit [OpenAI Platform](https://platform.openai.com/api-keys)
-2. Create a new API key
-3. Copy and paste it into your `.env.local` file
-
-### 3. Run the Application
-
-Start both the Next.js frontend and Mastra backend:
-
-```bash
+# Run development servers
 npm run dev
 ```
 
-This runs both servers in parallel:
+### Accessing the Application
 
-- **Next.js App**: [http://localhost:3000](http://localhost:3000) - Main chat interface
-- **Mastra Backend**: [http://localhost:4111](http://localhost:4111) - Agent playground and API
+- **Frontend**: [http://localhost:3000](http://localhost:3000) - Main application
+- **Mastra Backend**: [http://localhost:4111](http://localhost:4111) - Agent playground
+- **API Docs**: [http://localhost:4111/swagger-ui](http://localhost:4111/swagger-ui)
 
-### 4. Test Your Setup
+## 🔧 Environment Configuration
 
-1. **Chat Interface**: Open [http://localhost:3000](http://localhost:3000) and ask about the weather
-2. **Mastra Playground**: Open [http://localhost:4111](http://localhost:4111) to test agents directly
-3. **API Documentation**: Visit [http://localhost:4111/swagger-ui](http://localhost:4111/swagger-ui) for API docs
-
-## What's Included
-
-### 🤖 Weather Agent (`src/mastra/agents/weather.ts`)
-
-- Intelligent weather information agent
-- Uses weather tools for real-time data
-- Conversational and helpful responses
-
-### 🛠️ Weather Tools (`src/mastra/tools/weather.ts`)
-
-- Get current weather conditions
-- Weather forecasts
-- Location-based weather data
-
-### ⚡ Weather Workflow (`src/mastra/workflows/weather.ts`)
-
-- Automated weather data processing
-- Multi-step weather analysis
-- Customizable workflow steps
-
-## Building Your Own Components
-
-### Creating New Agents
-
-1. **Create an agent file** in `src/mastra/agents/`:
-
-```typescript
-// src/mastra/agents/my-agent.ts
-import { Agent } from "@mastra/core/agent"
-import { openai } from "@ai-sdk/openai"
-
-export const myAgent = new Agent({
-	name: "My Agent",
-	instructions: "You are a helpful assistant that...",
-	model: openai("gpt-4o-mini"),
-})
-```
-
-2. **Register in the main config** (`src/mastra/index.ts`):
-
-```typescript
-import { myAgent } from "./agents/my-agent"
-
-export const mastra = new Mastra({
-	agents: {
-		weatherAgent,
-		myAgent, // Add your new agent
-	},
-	// ... rest of config
-})
-```
-
-### Creating New Tools
-
-1. **Create a tool file** in `src/mastra/tools/`:
-
-```typescript
-// src/mastra/tools/my-tool.ts
-import { createTool } from "@mastra/core/tools"
-import { z } from "zod"
-
-export const myTool = createTool({
-	id: "my-tool",
-	description: "Description of what this tool does",
-	inputSchema: z.object({
-		input: z.string().describe("Input description"),
-	}),
-	outputSchema: z.object({
-		result: z.string(),
-	}),
-	execute: async ({ context }) => {
-		// Your tool logic here
-		return { result: "processed: " + context.input }
-	},
-})
-```
-
-2. **Add to an agent**:
-
-```typescript
-export const myAgent = new Agent({
-	name: "My Agent",
-	instructions: "You can use my-tool to process data...",
-	model: openai("gpt-4o-mini"),
-	tools: {
-		myTool, // Add your tool
-	},
-})
-```
-
-### Creating New Workflows
-
-1. **Create a workflow file** in `src/mastra/workflows/`:
-
-```typescript
-// src/mastra/workflows/my-workflow.ts
-import { createWorkflow, createStep } from "@mastra/core/workflows"
-import { z } from "zod"
-
-const step1 = createStep({
-	id: "process-data",
-	inputSchema: z.object({ data: z.string() }),
-	outputSchema: z.object({ processed: z.string() }),
-	execute: async ({ inputData }) => {
-		return { processed: `Processed: ${inputData.data}` }
-	},
-})
-
-export const myWorkflow = createWorkflow({
-	id: "my-workflow",
-	description: "My custom workflow",
-	inputSchema: z.object({ data: z.string() }),
-	outputSchema: z.object({ processed: z.string() }),
-})
-	.then(step1)
-	.commit()
-```
-
-2. **Register the workflow**:
-
-```typescript
-export const mastra = new Mastra({
-	workflows: {
-		weatherWorkflow,
-		myWorkflow, // Add your workflow
-	},
-	// ... rest of config
-})
-```
-
-## Using MCP (Model Context Protocol)
-
-Mastra supports MCP for connecting to external tools and services. Here's how to add MCP tools:
-
-1. **Install MCP package**:
+### Required Variables
 
 ```bash
-npm install @mastra/mcp
+# OpenAI API key for AI agents
+OPENAI_API_KEY=sk-...
+
+# Database URL (SQLite by default)
+DATABASE_URL=file:./storage.db
 ```
 
-2. **Configure MCP client** (`src/mastra/mcp.ts`):
+### Optional Services
 
-```typescript
-import { MCPClient } from "@mastra/mcp"
+```bash
+# Clerk Authentication
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
+CLERK_SECRET_KEY=sk_...
 
-export const mcp = new MCPClient({
-	servers: {
-		filesystem: {
-			command: "npx",
-			args: ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/folder"],
-		},
-	},
-})
+# Enhanced Web Search
+EXA_API_KEY=exa_...
+
+# Google Docs Export
+GOOGLE_SERVICE_ACCOUNT_KEY={"type":"service_account",...}
+GOOGLE_DRIVE_FOLDER_ID=...
+
+# MongoDB Storage
+MONGODB_URI=mongodb://localhost:27017/tasc-blog
+
+# Turso Database (alternative to SQLite)
+TURSO_DATABASE_URL=libsql://...
+TURSO_AUTH_TOKEN=...
 ```
 
-3. **Add MCP tools to agents**:
+## 🏗️ Architecture
 
-```typescript
-const agent = new Agent({
-	name: "Agent with MCP Tools",
-	instructions: "You can use filesystem tools...",
-	model: openai("gpt-4o-mini"),
-	tools: await mcp.getTools(),
-})
+### Agents
+- **Blog Article Agent**: Main content creation agent
+- **SEO Orchestrator**: Coordinates the SEO workflow
+- **SEO Research Agent**: Keyword and topic research
+- **SEO Structure Agent**: Content structure optimization
+- **SEO Content Agent**: Content writing and optimization
+- **SEO Optimization Agent**: Final optimization pass
+
+### Workflows
+- **Blog Research Workflow**: Human-in-the-loop research process
+- **SEO Article Workflow**: Automated SEO-optimized article creation
+
+### Tools
+- **Unified Research Tool**: Consolidated research capabilities
+- **TASC Context Tool**: Company guidelines and standards
+
+### Security
+- Environment variable validation with Zod
+- Input sanitization for XSS prevention
+- Rate limiting (100 req/min)
+- Authentication on all API routes
+- Security headers on responses
+- Audit logging
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+npm test
+
+# Run specific test suites
+npm test src/lib/__tests__/security.test.ts
+npm test src/lib/__tests__/env.test.ts
+npm test src/lib/seo-analyzer/__tests__
+npm test src/mastra/agents/__tests__
+npm test src/mastra/tools/__tests__
+npm test src/mastra/workflows/__tests__
+
+# Run linting
+npm run lint
 ```
 
-## Available Scripts
+## 📚 API Documentation
 
-- `npm run dev` - Start both Next.js and Mastra servers
-- `npm run dev:next` - Start only Next.js frontend
-- `npm run dev:mastra` - Start only Mastra backend
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
+### Articles API
+- `GET /api/articles` - List articles
+- `POST /api/articles` - Create article
+- `GET /api/articles/[id]` - Get article
+- `PUT /api/articles/[id]` - Update article
+- `DELETE /api/articles/[id]` - Delete article
+- `POST /api/articles/[id]/export-google-doc` - Export to Google Docs
 
-## Learn More
+### Workflow API
+- `POST /api/workflow/seo-article` - Execute SEO workflow
+- `GET /api/workflow/seo-article` - Get workflow info
+- `POST /api/workflow/seo-article/stream` - Execute with streaming
 
-- **Mastra Documentation**: [https://mastra.ai/docs](https://mastra.ai/docs)
-- **Assistant UI Documentation**: [https://assistant-ui.com](https://assistant-ui.com)
-- **MCP Documentation**: [https://modelcontextprotocol.io](https://modelcontextprotocol.io)
-- **Next.js Documentation**: [https://nextjs.org/docs](https://nextjs.org/docs)
+All endpoints require authentication and include rate limiting.
 
-## Deployment
+## 🐳 Docker Commands
 
-Deploy your agent starter to Vercel:
+```bash
+# Development
+make dev          # Start development environment
+make logs         # View logs
+make stop         # Stop services
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/your-username/agent-starter)
+# Production
+make prod         # Start production environment
+make build        # Build images
 
-## Support
+# Maintenance
+make clean        # Remove containers and volumes
+make rebuild      # Clean rebuild
+```
 
-Need help?
+## 🚀 Deployment
 
-- Join the [Mastra Discord](https://discord.gg/mastra) community
-- Check the [Mastra Documentation](https://mastra.ai/docs)
-- Review the example code in this repository
-# Force sync
+### Production Checklist
+1. Set all required environment variables
+2. Enable authentication (Clerk)
+3. Configure production database
+4. Set up monitoring and logging
+5. Configure rate limiting
+6. Enable HTTPS
+
+### Docker Production
+```bash
+# Build and run production
+make prod
+```
+
+### Vercel Deployment
+```bash
+# Deploy to Vercel
+vercel --prod
+```
+
+## 🛡️ Security Features
+
+- **Authentication**: Clerk integration for user management
+- **Authorization**: Role-based access control ready
+- **Input Validation**: Zod schemas on all endpoints
+- **Rate Limiting**: Configurable per-endpoint limits
+- **Security Headers**: XSS, CSRF, clickjacking protection
+- **Audit Logging**: Security event tracking
+- **Environment Security**: Validated env variables
+
+## 📖 Documentation
+
+- [CLAUDE.md](../CLAUDE.md) - AI assistant instructions
+- [ARCHITECTURE_ANALYSIS.md](ARCHITECTURE_ANALYSIS.md) - System architecture
+- [SECURITY_AUDIT.md](SECURITY_AUDIT.md) - Security documentation
+- [README-DOCKER.md](README-DOCKER.md) - Docker setup guide
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Write tests for new features
+4. Ensure all tests pass
+5. Update documentation
+6. Submit a pull request
+
+## 📞 Support
+
+- Review the documentation in `/docs`
+- Check the example implementations
+- Submit issues on GitHub
+- Contact TASC technical team
+
+## 📄 License
+
+Proprietary - TASC (Technical Analysis and Strategic Consulting)
+
+---
+
+Built with ❤️ for TASC by the engineering team

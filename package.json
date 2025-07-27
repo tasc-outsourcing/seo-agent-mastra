@@ -1,7 +1,10 @@
 {
-	"name": "@product-studio/agent-starter",
-	"version": "0.1.0",
+	"name": "@tasc/blog-article-agent",
+	"version": "2.0.0",
+	"description": "AI-powered blog article creation system for TASC with SEO optimization",
 	"private": true,
+	"author": "TASC Engineering Team",
+	"license": "Proprietary",
 	"type": "module",
 	"scripts": {
 		"dev": "npm-run-all --parallel dev:next dev:mastra",
