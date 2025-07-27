@@ -3,15 +3,26 @@ import { auth } from '@clerk/nextjs/server'
 import { mastra } from '@/mastra'
 import { z } from 'zod'
 import { sanitizeInput, securityHeaders, auditLogger } from '@/lib/security'
+import { apiOptimizer } from '@/lib/api-optimizer'
+import { performanceMonitor } from '@/lib/performance-monitor'
+import { agentActivityLogger } from '@/lib/agent-activity-logger'
+import { createCacheKey } from '@/lib/performance-cache'
 
 export const maxDuration = 300 // 5 minutes for workflow execution
 
 export async function POST(request: NextRequest) {
+  const activityId = await agentActivityLogger.startActivity(
+    'SEOArticleWorkflow',
+    'Processing SEO article generation request',
+    { route: '/api/workflow/seo-article' }
+  )
+
   try {
     const { userId } = await auth()
     
     if (!userId) {
       auditLogger.log({ type: 'auth_failure', details: { route: 'seo-article-workflow' } })
+      await agentActivityLogger.completeActivity(activityId, undefined, 'Unauthorized access')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: securityHeaders })
     }
 
@@ -57,58 +68,97 @@ export async function POST(request: NextRequest) {
     }
 
     try {
+      // Generate cache key for potential caching
+      const cacheKey = createCacheKey('workflow', 'seoArticle', topic, articleType, targetAudience)
+      
       // Execute the SEO article workflow using proper Mastra API
-      console.log('Creating workflow run for:', workflowInput)
+      console.log('🚀 Creating workflow run for:', workflowInput)
       
       const run = await workflow.createRunAsync()
       const result = await run.start({
         inputData: workflowInput
       })
       
-      console.log('Workflow execution result:', result.status)
+      console.log('✅ Workflow execution result:', result.status)
       
       if (result.status === 'success') {
-        return NextResponse.json({
+        const responseData = {
           success: true,
           result: result.result,
           workflowId: 'seoArticleWorkflow',
           input: workflowInput,
           executionStatus: result.status
-        }, { headers: securityHeaders })
+        }
+
+        await agentActivityLogger.completeActivity(activityId, {
+          status: 'success',
+          workflowId: 'seoArticleWorkflow',
+          topic: topic.substring(0, 100)
+        })
+
+        // Use API optimizer for response
+        return await apiOptimizer.optimizeResponse(responseData, request, {
+          cacheKey,
+          cacheTTL: 300000, // 5 minutes cache for successful results
+          enableCompression: true
+        })
       } else if (result.status === 'suspended') {
-        return NextResponse.json({
+        const responseData = {
           success: false,
           error: 'Workflow suspended - requires human interaction',
           suspendedSteps: result.suspended,
           workflowId: 'seoArticleWorkflow'
-        }, { status: 202, headers: securityHeaders })
+        }
+
+        await agentActivityLogger.completeActivity(activityId, {
+          status: 'suspended',
+          suspendedSteps: result.suspended?.length || 0
+        })
+
+        return await apiOptimizer.optimizeResponse(responseData, request, {
+          enableCompression: true
+        })
       } else {
-        return NextResponse.json({
+        const responseData = {
           success: false,
           error: 'Workflow execution failed',
           details: result.error || 'Unknown workflow error',
           workflowId: 'seoArticleWorkflow'
-        }, { status: 500, headers: securityHeaders })
+        }
+
+        await agentActivityLogger.completeActivity(activityId, undefined, result.error || 'Workflow failed')
+
+        return await apiOptimizer.optimizeResponse(responseData, request, {
+          enableCompression: true
+        })
       }
     } catch (error) {
-      console.error('API error:', error)
+      console.error('❌ API error:', error)
+      await agentActivityLogger.completeActivity(activityId, undefined, error instanceof Error ? error.message : 'Unknown error')
       auditLogger.log({
         type: 'api_error',
         userId,
         details: { route: 'seo-article-workflow', error: error instanceof Error ? error.message : 'Unknown error' }
       })
-      return NextResponse.json({ 
+
+      const errorResponse = { 
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error'
-      }, { status: 500, headers: securityHeaders })
+      }
+
+      return await apiOptimizer.optimizeResponse(errorResponse, request, {
+        enableCompression: true
+      })
     }
 
   } catch (error) {
-    console.error('API error:', error)
+    console.error('❌ Critical API error:', error)
+    await agentActivityLogger.completeActivity(activityId, undefined, error instanceof Error ? error.message : 'Critical error')
+    
     return NextResponse.json({ 
       error: 'Internal server error',
       details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
+    }, { status: 500, headers: securityHeaders })
   }
 }
 
