@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { mastra } from '@/mastra'
+import { z } from 'zod'
+import { sanitizeInput, auditLogger } from '@/lib/security'
 
 export const maxDuration = 300 // 5 minutes for workflow execution
 
@@ -9,15 +11,31 @@ export async function POST(request: NextRequest) {
     const { userId } = await auth()
     
     if (!userId) {
+      auditLogger.log({ type: 'auth_failure', details: { route: 'seo-article-workflow-stream' } })
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
-    const { topic, articleType, targetAudience, researchOption, existingResearch } = body
+    // Define validation schema
+    const workflowSchema = z.object({
+      topic: z.string().min(1).max(500).transform(sanitizeInput),
+      articleType: z.enum(['informational', 'how-to', 'comparison', 'listicle']).optional(),
+      targetAudience: z.string().max(200).optional().transform(val => val ? sanitizeInput(val) : undefined),
+      researchOption: z.enum(['new', 'existing']).optional(),
+      existingResearch: z.string().max(10000).optional().transform(val => val ? sanitizeInput(val) : undefined)
+    })
 
-    if (!topic) {
-      return NextResponse.json({ error: 'Topic is required' }, { status: 400 })
+    const body = await request.json()
+    
+    // Validate input
+    const validationResult = workflowSchema.safeParse(body)
+    if (!validationResult.success) {
+      return NextResponse.json({ 
+        error: 'Invalid input',
+        details: validationResult.error.flatten()
+      }, { status: 400 })
     }
+    
+    const { topic, articleType, targetAudience, researchOption, existingResearch } = validationResult.data
 
     // Create a readable stream for Server-Sent Events
     const encoder = new TextEncoder()
@@ -44,11 +62,16 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
+        'X-Content-Type-Options': 'nosniff',
       }
     })
 
   } catch (error) {
     console.error('Stream API error:', error)
+    auditLogger.log({
+      type: 'api_error',
+      details: { route: 'seo-article-workflow-stream', error: error instanceof Error ? error.message : 'Unknown error' }
+    })
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

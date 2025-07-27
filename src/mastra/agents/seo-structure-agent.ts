@@ -2,6 +2,7 @@ import { openai } from "@ai-sdk/openai"
 import { Agent } from "@mastra/core/agent"
 import { articleFileManagerTool } from "../tools/article-file-manager"
 import { tascContextTool } from "../tools/tasc-context-tool"
+import { tascWebSearchTool } from "../tools/tasc-web-search"
 
 /*************************************************************************/
 /*  SEO STRUCTURE AGENT - Handles Phases 4-6: Structure & Planning
@@ -61,5 +62,9 @@ export const seoStructureAgent: Agent = new Agent({
 	name: "SEO Structure Agent",
 	instructions: SEO_STRUCTURE_AGENT_PROMPT,
 	model: openai("gpt-4o"),
-	tools: { articleFileManagerTool, tascContextTool }
+	tools: { 
+		articleFileManagerTool, 
+		tascContextTool,
+		tascWebSearchTool
+	}
 })

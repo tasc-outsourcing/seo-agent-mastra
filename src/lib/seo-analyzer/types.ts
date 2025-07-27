@@ -7,6 +7,7 @@ export interface AssessmentResult {
   text: string
   id: string
   rating: AssessmentRating
+  impact?: 'positive' | 'low' | 'medium' | 'high'
 }
 
 export interface SEOData {
@@ -17,6 +18,7 @@ export interface SEOData {
   keyword?: string
   synonyms?: string[]
   relatedKeywords?: string[]
+  semanticKeywords?: string[]
 }
 
 export interface ReadabilityData {

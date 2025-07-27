@@ -1,17 +1,14 @@
 import { google } from 'googleapis'
-
-const GOOGLE_CREDENTIALS = process.env.GOOGLE_SERVICE_ACCOUNT_KEY
-const GOOGLE_FOLDER_ID = process.env.GOOGLE_DRIVE_FOLDER_ID
-
-if (!GOOGLE_CREDENTIALS) {
-  console.warn('Google Service Account credentials not found')
-}
+import { getEnv, isFeatureEnabled } from '@/lib/env'
+import { auditLogger } from '@/lib/security'
 
 let auth: any = null
 
-if (GOOGLE_CREDENTIALS) {
+// Initialize Google auth if configured
+if (isFeatureEnabled('google')) {
   try {
-    const credentials = JSON.parse(GOOGLE_CREDENTIALS)
+    const env = getEnv()
+    const credentials = JSON.parse(env.GOOGLE_SERVICE_ACCOUNT_KEY!)
     auth = new google.auth.GoogleAuth({
       credentials,
       scopes: [
@@ -20,14 +17,28 @@ if (GOOGLE_CREDENTIALS) {
       ]
     })
   } catch (error) {
-    console.error('Failed to parse Google credentials:', error)
+    console.error('Failed to initialize Google auth:', error)
+    auditLogger.log({
+      type: 'api_error',
+      details: { 
+        service: 'google',
+        error: 'Failed to parse Google credentials'
+      }
+    })
   }
 }
 
 export async function createGoogleDoc(title: string, content: string): Promise<string | null> {
-  if (!auth) {
-    throw new Error('Google authentication not configured')
+  if (!isFeatureEnabled('google')) {
+    throw new Error('Google integration not configured. Please set GOOGLE_SERVICE_ACCOUNT_KEY and GOOGLE_DRIVE_FOLDER_ID')
   }
+
+  if (!auth) {
+    throw new Error('Google authentication failed to initialize')
+  }
+
+  const env = getEnv()
+  const GOOGLE_FOLDER_ID = env.GOOGLE_DRIVE_FOLDER_ID
 
   try {
     const docs = google.docs({ version: 'v1', auth })
@@ -68,25 +79,49 @@ export async function createGoogleDoc(title: string, content: string): Promise<s
       })
     }
 
-    // Set permissions for editors
+    // Set permissions for editors (more restrictive than 'anyone')
     await drive.permissions.create({
       fileId: documentId,
       requestBody: {
         role: 'writer',
-        type: 'anyone'
+        type: 'domain',
+        domain: 'tascoutsourcing.com' // Restrict to company domain
       }
+    }).catch(async (error) => {
+      // Fallback to link sharing if domain restriction fails
+      console.warn('Domain restriction failed, using link sharing:', error)
+      await drive.permissions.create({
+        fileId: documentId,
+        requestBody: {
+          role: 'writer',
+          type: 'anyone',
+          allowFileDiscovery: false
+        }
+      })
     })
 
     return documentId
   } catch (error) {
     console.error('Failed to create Google Doc:', error)
+    auditLogger.log({
+      type: 'api_error',
+      details: { 
+        service: 'google',
+        action: 'createDoc',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }
+    })
     throw error
   }
 }
 
 export async function updateGoogleDoc(documentId: string, content: string): Promise<void> {
+  if (!isFeatureEnabled('google')) {
+    throw new Error('Google integration not configured')
+  }
+
   if (!auth) {
-    throw new Error('Google authentication not configured')
+    throw new Error('Google authentication not initialized')
   }
 
   try {
@@ -122,6 +157,15 @@ export async function updateGoogleDoc(documentId: string, content: string): Prom
     })
   } catch (error) {
     console.error('Failed to update Google Doc:', error)
+    auditLogger.log({
+      type: 'api_error',
+      details: { 
+        service: 'google',
+        action: 'updateDoc',
+        documentId,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }
+    })
     throw error
   }
 }

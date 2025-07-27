@@ -1,4 +1,6 @@
 import mongoose from 'mongoose'
+import { getEnv, isFeatureEnabled } from '@/lib/env'
+import { auditLogger } from '@/lib/security'
 
 declare global {
   var mongoose: any
@@ -11,13 +13,13 @@ if (!cached) {
 }
 
 async function connectDB() {
-  // Check for MongoDB URI at runtime, not build time
-  const MONGODB_URI = process.env.MONGODB_URI
-  
-  if (!MONGODB_URI) {
-    console.error('MONGODB_URI is not defined')
-    throw new Error('Please define the MONGODB_URI environment variable')
+  // Check if MongoDB is configured
+  if (!isFeatureEnabled('mongodb')) {
+    throw new Error('MongoDB is not configured. Please set MONGODB_URI environment variable')
   }
+  
+  const env = getEnv()
+  const MONGODB_URI = env.MONGODB_URI!
 
   if (cached.conn) {
     return cached.conn
@@ -37,6 +39,13 @@ async function connectDB() {
     cached.conn = await cached.promise
   } catch (e) {
     cached.promise = null
+    auditLogger.log({
+      type: 'api_error',
+      details: { 
+        service: 'mongodb',
+        error: e instanceof Error ? e.message : 'Unknown error'
+      }
+    })
     throw e
   }
 

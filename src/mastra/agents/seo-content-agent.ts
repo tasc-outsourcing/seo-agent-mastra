@@ -2,6 +2,8 @@ import { openai } from "@ai-sdk/openai"
 import { Agent } from "@mastra/core/agent"
 import { articleFileManagerTool } from "../tools/article-file-manager"
 import { tascContextTool } from "../tools/tasc-context-tool"
+import { tascWebSearchTool } from "../tools/tasc-web-search"
+import { unifiedResearchTool } from "../tools/unified-research"
 
 /*************************************************************************/
 /*  SEO CONTENT AGENT - Handles Phases 7-8: Content Creation & Flow
@@ -65,5 +67,10 @@ export const seoContentAgent: Agent = new Agent({
 	name: "SEO Content Agent",
 	instructions: SEO_CONTENT_AGENT_PROMPT,
 	model: openai("gpt-4o"),
-	tools: { articleFileManagerTool, tascContextTool }
+	tools: { 
+		articleFileManagerTool, 
+		tascContextTool,
+		tascWebSearchTool,
+		unifiedResearchTool
+	}
 })

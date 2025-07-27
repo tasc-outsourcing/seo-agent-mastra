@@ -1,27 +1,31 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 import Exa from 'exa-js';
-import 'dotenv/config';
+import { getApiKey, validateEnv } from '../../lib/env';
+import { sanitizeInput, auditLogger } from '../../lib/security';
 
-// Initialize Exa client
-const exa = new Exa(process.env.EXA_API_KEY);
+// Validate environment on startup
+try {
+  validateEnv();
+} catch (error) {
+  console.error('Failed to validate environment variables:', error);
+  process.exit(1);
+}
+
+// Initialize Exa client with validated API key
+const exa = new Exa(getApiKey('exa'));
 
 export const webSearchTool = createTool({
   id: 'web-search',
   description: 'Search the web for information on a specific query and return summarized content',
   inputSchema: z.object({
-    query: z.string().describe('The search query to run'),
+    query: z.string().describe('The search query to run').transform(sanitizeInput),
   }),
   execute: async ({ context, mastra }) => {
     console.log('Executing web search tool');
     const { query } = context;
 
     try {
-      if (!process.env.EXA_API_KEY) {
-        console.error('Error: EXA_API_KEY not found in environment variables');
-        return { results: [], error: 'Missing API key' };
-      }
-
       console.log(`Searching web for: "${query}"`);
       const { results } = await exa.searchAndContents(query, {
         livecrawl: 'always',
@@ -90,7 +94,16 @@ Provide a concise summary that captures the key information relevant to the rese
     } catch (error) {
       console.error('Error searching the web:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Error details:', errorMessage);
+      
+      auditLogger.log({
+        type: 'api_error',
+        details: { 
+          service: 'exa',
+          query,
+          error: errorMessage
+        }
+      });
+      
       return {
         results: [],
         error: errorMessage,

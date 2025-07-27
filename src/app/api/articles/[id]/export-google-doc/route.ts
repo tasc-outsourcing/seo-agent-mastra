@@ -3,13 +3,16 @@ import { auth } from '@clerk/nextjs/server'
 import connectDB from '@/lib/mongodb'
 import { getArticleModel } from '@/lib/db-models'
 import { createGoogleDoc, updateGoogleDoc, getGoogleDocUrl } from '@/lib/google-docs'
+import { isFeatureEnabled } from '@/lib/env'
+import { securityHeaders, auditLogger } from '@/lib/security'
 
 export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const { userId } = await auth()
     
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      auditLogger.log({ type: 'auth_failure', details: { route: 'export-google-doc' } });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: securityHeaders })
     }
 
     const params = await context.params
@@ -19,7 +22,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     const article = await Article.findOne({ _id: params.id, userId })
     
     if (!article) {
-      return NextResponse.json({ error: 'Article not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Article not found' }, { status: 404, headers: securityHeaders })
     }
 
     // Prepare content for Google Doc
@@ -45,7 +48,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       }
 
       if (!googleDocId) {
-        return NextResponse.json({ error: 'Failed to create/update Google Doc' }, { status: 500 })
+        return NextResponse.json({ error: 'Failed to create/update Google Doc' }, { status: 500, headers: securityHeaders })
       }
 
       return NextResponse.json({
@@ -54,25 +57,31 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
         googleDocUrl: getGoogleDocUrl(googleDocId),
         isNewDoc,
         message: isNewDoc ? 'Google Doc created successfully' : 'Google Doc updated successfully'
-      })
+      }, { headers: securityHeaders })
 
     } catch (googleError) {
       console.error('Google Docs API error:', googleError)
       
       // Check if Google credentials are configured
-      if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
+      if (!isFeatureEnabled('google')) {
         return NextResponse.json({ 
           error: 'Google Docs integration not configured. Please set up Google Service Account credentials.' 
-        }, { status: 503 })
+        }, { status: 503, headers: securityHeaders })
       }
+      
+      auditLogger.log({
+        type: 'api_error',
+        userId,
+        details: { service: 'google-docs', error: googleError.message }
+      });
       
       return NextResponse.json({ 
         error: 'Failed to export to Google Docs. Please check your Google API configuration.' 
-      }, { status: 500 })
+      }, { status: 500, headers: securityHeaders })
     }
 
   } catch (error) {
     console.error('Error exporting to Google Doc:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: securityHeaders })
   }
 }

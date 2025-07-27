@@ -2,7 +2,7 @@ import { openai } from "@ai-sdk/openai"
 import { Agent } from "@mastra/core/agent"
 import { articleFileManagerTool } from "../tools/article-file-manager"
 import { tascWebSearchTool } from "../tools/tasc-web-search"
-import { tascDeepResearchTool } from "../tools/tasc-deep-research"
+import { unifiedResearchTool } from "../tools/unified-research"
 import { seoAnalyzerTool } from "../tools/seo-analyzer"
 import { tascContextTool } from "../tools/tasc-context-tool"
 
@@ -76,7 +76,7 @@ export const seoOrchestratorAgent: Agent = new Agent({
 	tools: { 
 		articleFileManagerTool,
 		tascWebSearchTool,
-		tascDeepResearchTool,
+		unifiedResearchTool,
 		seoAnalyzerTool,
 		tascContextTool
 	}

@@ -1,12 +1,14 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 import Exa from 'exa-js';
+import { getApiKey, isFeatureEnabled } from '@/lib/env';
+import { sanitizeInput, auditLogger } from '@/lib/security';
 
 export const tascWebSearchTool = createTool({
   id: 'tasc-web-search',
   description: 'Search the web for TASC blog article research, focusing on technical analysis and strategic consulting topics',
   inputSchema: z.object({
-    query: z.string().describe('The search query for TASC blog research'),
+    query: z.string().describe('The search query for TASC blog research').transform(sanitizeInput),
     searchType: z.enum(['trends', 'case-studies', 'expert-opinions', 'statistics', 'industry-news']).optional().describe('Type of search to perform'),
     maxResults: z.number().optional().describe('Maximum number of results to return (default: 5)'),
   }),
@@ -29,12 +31,12 @@ export const tascWebSearchTool = createTool({
     
     try {
       // Initialize Exa client if API key is available
-      if (!process.env.EXA_API_KEY) {
-        console.warn('EXA_API_KEY not found, using fallback mock data');
+      if (!isFeatureEnabled('exa')) {
+        console.warn('EXA API not configured, using fallback mock data');
         return getMockResults(query, maxResults);
       }
 
-      const exa = new Exa(process.env.EXA_API_KEY);
+      const exa = new Exa(getApiKey('exa'));
       
       // Enhance query based on search type and TASC focus
       const enhancedQuery = enhanceQueryForTASC(query, searchType);

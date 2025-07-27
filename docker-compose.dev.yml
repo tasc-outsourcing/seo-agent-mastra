@@ -1,0 +1,73 @@
+
+services:
+  # Next.js Frontend Service (Development)
+  frontend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.mastra
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=file:/app/data/storage.db
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+      - NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+      - NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+      - MASTRA_BASE_URL=http://mastra-dev:4111
+    volumes:
+      - app_data:/app/data
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./.next:/app/.next
+    depends_on:
+      - mastra-dev
+    networks:
+      - tasc_dev_network
+    command: npm run dev:next
+
+  # Mastra Backend Service (Development)
+  mastra-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.mastra
+    ports:
+      - "4111:4111"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=file:/app/data/storage.db
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - EXA_API_KEY=${EXA_API_KEY}
+    volumes:
+      - app_data:/app/data
+      - ./src/mastra:/app/src/mastra
+    networks:
+      - tasc_dev_network
+
+  # Deep Research Agent Service (Development)
+  deep-research-dev:
+    build:
+      context: ./tasc-deep-research-agent
+      dockerfile: ../Dockerfile.deep-research
+    ports:
+      - "4112:4111"
+    environment:
+      - NODE_ENV=development
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - EXA_API_KEY=${EXA_API_KEY}
+    volumes:
+      - research_data:/app/data
+      - ./tasc-deep-research-agent/src:/app/src
+    networks:
+      - tasc_dev_network
+
+volumes:
+  app_data:
+    driver: local
+  research_data:
+    driver: local
+
+networks:
+  tasc_dev_network:
+    driver: bridge

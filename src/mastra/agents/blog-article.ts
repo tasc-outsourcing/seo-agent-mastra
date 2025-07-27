@@ -1,9 +1,8 @@
 import { openai } from "@ai-sdk/openai"
 import { Agent } from "@mastra/core/agent"
-import { blogResearchTool } from "../tools/blog-research"
+import { unifiedResearchTool } from "../tools/unified-research"
 import { tascContextTool } from "../tools/tasc-context-tool"
 import { tascWebSearchTool } from "../tools/tasc-web-search"
-import { tascDeepResearchTool } from "../tools/tasc-deep-research"
 import { seoAnalyzerTool } from "../tools/seo-analyzer"
 
 /*************************************************************************/
@@ -38,5 +37,5 @@ export const blogArticleAgent: Agent = new Agent({
 	name: "TASC Blog Article Agent",
 	instructions: BLOG_ARTICLE_AGENT_PROMPT,
 	model: openai("gpt-4o"),
-	tools: { blogResearchTool, tascContextTool, tascWebSearchTool, tascDeepResearchTool, seoAnalyzerTool },
+	tools: { unifiedResearchTool, tascContextTool, tascWebSearchTool, seoAnalyzerTool },
 }) 

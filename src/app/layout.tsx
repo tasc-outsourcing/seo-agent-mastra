@@ -4,6 +4,21 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { ClerkProvider } from "@clerk/nextjs"
 import { Toaster } from "sonner"
+import { validateEnv } from "@/lib/env"
+
+// Validate environment variables on startup (server-side only)
+if (typeof window === 'undefined') {
+  try {
+    validateEnv();
+    console.log('✅ Environment variables validated successfully');
+  } catch (error) {
+    console.error('❌ Environment validation failed:', error);
+    // In production, you might want to exit the process
+    // if (process.env.NODE_ENV === 'production') {
+    //   process.exit(1);
+    // }
+  }
+}
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",

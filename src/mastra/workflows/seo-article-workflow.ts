@@ -215,16 +215,50 @@ const contentStep = createStep({
     draftComplete: z.boolean(),
     enhancedComplete: z.boolean()
   }),
-  execute: async ({ inputData }) => {
+  execute: async ({ inputData, mastra }) => {
     const { articleSlug, folderCreated, outlineComplete, bulletsComplete } = inputData
     
     if (!folderCreated || !outlineComplete || !bulletsComplete) {
       throw new Error("Structure phase must be complete before content phase")
     }
 
-    return {
-      draftComplete: true, // Will be updated by agent
-      enhancedComplete: true
+    // Get the SEO Content Agent for content creation
+    const contentAgent = mastra!.getAgent('seoContentAgent')
+    
+    const contentPrompt = `Execute content creation phases 7-8 for article: "${articleSlug}"
+
+Phase 7: Draft Article Creation
+- Read the section-bullets.md file from the article folder
+- Transform each bullet point into full paragraphs (80-120 words each)
+- Maintain persona tone and integrate semantic keywords naturally
+- Save as draft-article.md
+
+Phase 8: Content Enhancement
+- Polish the draft with smooth transitions and flow
+- Ensure consistent tone and logical progression
+- Add transitional phrases between sections
+- Save as enhanced-article.md
+
+Use the article file manager tool to read existing files and save the outputs.`
+
+    try {
+      // Execute content creation with the agent
+      await contentAgent.generate([{
+        role: 'user',
+        content: contentPrompt
+      }], { maxSteps: 20 })
+
+      return {
+        draftComplete: true,
+        enhancedComplete: true
+      }
+    } catch (error) {
+      console.error('Content creation failed:', error)
+      // Fallback: At least create the files
+      return {
+        draftComplete: false,
+        enhancedComplete: false
+      }
     }
   }
 })
@@ -248,22 +282,78 @@ const optimizationStep = createStep({
     finalReview: z.boolean(),
     articlePath: z.string()
   }),
-  execute: async ({ inputData }) => {
+  execute: async ({ inputData, mastra }) => {
     const { articleSlug, draftComplete, enhancedComplete } = inputData
     
     if (!draftComplete || !enhancedComplete) {
       throw new Error("Content phase must be complete before optimization phase")
     }
 
-    return {
-      metadataComplete: true, // Will be updated by agent
-      faqsComplete: true,
-      sgeOptimized: true,
-      uxEnhanced: true,
-      yoastOptimized: true,
-      linksAdded: true,
-      finalReview: true,
-      articlePath: `generated-articles/${articleSlug}`
+    // Get the SEO Optimization Agent
+    const optimizationAgent = mastra!.getAgent('seoOptimizationAgent')
+    
+    const optimizationPrompt = `Execute optimization phases 9-15 for article: "${articleSlug}"
+
+Phase 9: SEO Metadata
+- Create meta title (50-60 chars) and description (120-156 chars)
+- Optimize H1 and finalize semantic keywords
+- Save as seo-metadata.md
+
+Phase 10: FAQ Generation
+- Extract PAA questions and create FAQ section
+- Generate JSON-LD schema for FAQPage
+- Save as faqs.json
+
+Phase 11: SGE/AI Optimization
+- Optimize for AI search engines and voice assistants
+- Add snippet-ready summaries and lists
+
+Phase 12: Visual & UX Enhancement
+- Add recommendations for images and visual elements
+- Improve scanability with formatting
+
+Phase 13: Yoast SEO & Humanization
+- Achieve 95+ SEO score with the SEO analyzer tool
+- Ensure natural, human-like tone
+
+Phase 14: Internal Linking
+- Add 3-7 contextual internal links
+
+Phase 15: Final Review
+- Comprehensive quality check
+
+Use the article file manager and SEO analyzer tools to complete all phases.`
+
+    try {
+      // Execute all optimization phases
+      await optimizationAgent.generate([{
+        role: 'user',
+        content: optimizationPrompt
+      }], { maxSteps: 25 })
+
+      return {
+        metadataComplete: true,
+        faqsComplete: true,
+        sgeOptimized: true,
+        uxEnhanced: true,
+        yoastOptimized: true,
+        linksAdded: true,
+        finalReview: true,
+        articlePath: `generated-articles/${articleSlug}`
+      }
+    } catch (error) {
+      console.error('Optimization phase failed:', error)
+      // Partial completion fallback
+      return {
+        metadataComplete: false,
+        faqsComplete: false,
+        sgeOptimized: false,
+        uxEnhanced: false,
+        yoastOptimized: false,
+        linksAdded: false,
+        finalReview: false,
+        articlePath: `generated-articles/${articleSlug}`
+      }
     }
   }
 })

@@ -2,6 +2,8 @@ import { openai } from "@ai-sdk/openai"
 import { Agent } from "@mastra/core/agent"
 import { articleFileManagerTool } from "../tools/article-file-manager"
 import { seoAnalyzerTool } from "../tools/seo-analyzer"
+import { tascContextTool } from "../tools/tasc-context-tool"
+import { tascWebSearchTool } from "../tools/tasc-web-search"
 
 /*************************************************************************/
 /*  SEO OPTIMIZATION AGENT - Handles Phases 9-15: Enhancement & Polish
@@ -91,5 +93,10 @@ export const seoOptimizationAgent: Agent = new Agent({
 	name: "SEO Optimization Agent",
 	instructions: SEO_OPTIMIZATION_AGENT_PROMPT,
 	model: openai("gpt-4o"),
-	tools: { articleFileManagerTool, seoAnalyzerTool }
+	tools: { 
+		articleFileManagerTool, 
+		seoAnalyzerTool,
+		tascContextTool,
+		tascWebSearchTool
+	}
 })

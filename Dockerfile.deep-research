@@ -1,0 +1,36 @@
+# Dockerfile for Deep Research Agent Service
+FROM node:20-alpine AS base
+
+# Install dependencies only when needed
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+RUN npm install --omit=dev
+
+# Development image for Deep Research Agent
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV=development
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 research
+
+# Copy dependencies and source
+COPY --from=deps /app/node_modules ./node_modules
+COPY --chown=research:nodejs . .
+
+# Create directory for database
+RUN mkdir -p /app/data && chown research:nodejs /app/data
+
+USER research
+
+EXPOSE 4111
+
+ENV PORT=4111
+ENV HOSTNAME="0.0.0.0"
+
+CMD ["npm", "run", "dev"]
