@@ -10,16 +10,17 @@ import { seoStructureAgent } from "./agents/seo-structure-agent"
 import { seoContentAgent } from "./agents/seo-content-agent"
 import { seoOptimizationAgent } from "./agents/seo-optimization-agent"
 import { getEnv, isFeatureEnabled } from "@/lib/env"
+import { wrapAgentWithLogging } from "@/lib/agent-wrapper"
 
 export const mastra = new Mastra({
 	workflows: { blogResearchWorkflow, seoArticleWorkflow },
 	agents: { 
-		blogArticleAgent,
-		seoOrchestratorAgent,
-		seoResearchAgent,
-		seoStructureAgent,
-		seoContentAgent,
-		seoOptimizationAgent
+		blogArticleAgent: wrapAgentWithLogging(blogArticleAgent, 'blogArticleAgent'),
+		seoOrchestratorAgent: wrapAgentWithLogging(seoOrchestratorAgent, 'seoOrchestratorAgent'),
+		seoResearchAgent: wrapAgentWithLogging(seoResearchAgent, 'seoResearchAgent'),
+		seoStructureAgent: wrapAgentWithLogging(seoStructureAgent, 'seoStructureAgent'),
+		seoContentAgent: wrapAgentWithLogging(seoContentAgent, 'seoContentAgent'),
+		seoOptimizationAgent: wrapAgentWithLogging(seoOptimizationAgent, 'seoOptimizationAgent')
 	},
 	storage: new LibSQLStore({
 		url: isFeatureEnabled('turso') ? getEnv().TURSO_DATABASE_URL! : "file:./storage.db",

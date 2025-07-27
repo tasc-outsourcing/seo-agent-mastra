@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { ClerkProvider } from "@clerk/nextjs"
 import { Toaster } from "sonner"
 import { validateEnv } from "@/lib/env"
+import { AgentChatAnnouncements } from "@/components/agent-chat-announcements"
 
 // Validate environment variables on startup (server-side only)
 if (typeof window === 'undefined') {
@@ -52,6 +53,7 @@ export default function RootLayout({
 					>
 						{children}
 						<Toaster />
+						<AgentChatAnnouncements />
 					</ThemeProvider>
 				</ClerkProvider>
 			</body>

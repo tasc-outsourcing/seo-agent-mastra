@@ -4,6 +4,7 @@ import { unifiedResearchTool } from "../tools/unified-research"
 import { tascContextTool } from "../tools/tasc-context-tool"
 import { tascWebSearchTool } from "../tools/tasc-web-search"
 import { seoAnalyzerTool } from "../tools/seo-analyzer"
+import { agentActivityLogger, withActivityLogging } from "@/lib/agent-activity-logger"
 
 /*************************************************************************/
 /*  BLOG ARTICLE AGENT - TASC BLOG ARTICLE AGENT V2
